@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ניהול ציוד ותרופות</title>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, getDocs, setDoc, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBqo8cdq0qraHiZ6I17eH1dbnfmwx9f2wM",
+    authDomain: "holland-s-clinic-inventory.firebaseapp.com",
+    projectId: "holland-s-clinic-inventory",
+    storageBucket: "holland-s-clinic-inventory.firebasestorage.app",
+    messagingSenderId: "15445543399",
+    appId: "1:15445543399:web:744af9316a7430ce44d542"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // ── Expose DB helpers to global scope ──
+  window._db = db;
+  window._fsCollection = collection;
+  window._fsDoc = doc;
+  window._fsSetDoc = setDoc;
+  window._fsDeleteDoc = deleteDoc;
+  window._fsGetDocs = getDocs;
+  window._fsOnSnapshot = onSnapshot;
+  window._firebaseReady = true;
+  window.dispatchEvent(new Event('firebaseReady'));
+</script>
+<style>
+  :root {
+    --bg: #F7F9F8;
+    --surface: #FFFFFF;
+    --border: #DDE4E2;
+    --text: #1A2724;
+    --text-muted: #6B8580;
+    --accent: #2A6B5F;
+    --accent-light: #E0F1EF;
+    --danger: #C0392B;
+    --danger-bg: #FDF0EF;
+    --warn: #B8640A;
+    --warn-bg: #FEF5E7;
+    --ok: #1D6B34;
+    --ok-bg: #EAF6EE;
+    --btn: #2A6B5F;
+    --btn-hover: #1E5248;
+    --radius: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; min-height: 100vh; }
+
+  header { background: var(--accent); color: #fff; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+  header h1 { font-size: 18px; font-weight: 700; }
+  header span { font-size: 12px; opacity: 0.8; }
+
+  .tabs { display: flex; background: var(--surface); border-bottom: 2px solid var(--border); padding: 0 24px; gap: 4px; flex-wrap: wrap; }
+  .tab { padding: 10px 16px; cursor: pointer; border: none; background: none; color: var(--text-muted); font-size: 13px; font-weight: 600; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.15s; white-space: nowrap; }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab:hover:not(.active) { color: var(--text); }
+
+  .main { padding: 20px 24px; max-width: 1150px; margin: 0 auto; }
+
+  .toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+  .toolbar input[type="text"] { flex: 1; min-width: 180px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px; outline: none; background: var(--surface); }
+  .toolbar input[type="text"]:focus { border-color: var(--accent); }
+
+  .btn { padding: 8px 14px; border-radius: var(--radius); border: none; cursor: pointer; font-size: 13px; font-weight: 600; transition: background 0.15s; }
+  .btn-primary { background: var(--btn); color: #fff; }
+  .btn-primary:hover { background: var(--btn-hover); }
+  .btn-outline { background: var(--surface); color: var(--accent); border: 1px solid var(--accent); }
+  .btn-outline:hover { background: var(--accent-light); }
+  .btn-sm { padding: 4px 10px; font-size: 12px; }
+
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+  .badge-ok { background: var(--ok-bg); color: var(--ok); }
+  .badge-warn { background: var(--warn-bg); color: var(--warn); }
+  .badge-danger { background: var(--danger-bg); color: var(--danger); }
+
+  .table-wrap { overflow-x: auto; background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; }
+  th { background: #F0F4F3; padding: 10px 12px; text-align: right; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #F9FBFB; }
+  tr.low-stock td { background: var(--danger-bg); }
+  tr.low-stock:hover td { background: #f8e8e7; }
+
+  .item-name { font-weight: 600; font-size: 13px; }
+  .item-makat { font-family: monospace; font-size: 12px; color: var(--text-muted); }
+
+  .qty-control { display: flex; align-items: center; gap: 6px; }
+  .qty-control button { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); cursor: pointer; font-size: 16px; line-height: 1; display: flex; align-items: center; justify-content: center; color: var(--accent); transition: all 0.1s; }
+  .qty-control button:hover { background: var(--accent-light); border-color: var(--accent); }
+  .qty-val { min-width: 28px; text-align: center; font-weight: 700; font-size: 15px; }
+  .qty-input { width: 52px; text-align: center; font-weight: 700; font-size: 15px; border: 2px solid var(--border); border-radius: 6px; padding: 3px 4px; outline: none; background: var(--surface); -moz-appearance: textfield; }
+  .qty-input::-webkit-outer-spin-button, .qty-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .qty-input:focus { border-color: var(--accent); background: var(--accent-light); }
+
+  .alerts-bar { background: var(--danger-bg); border: 1px solid #f0b8b4; border-radius: var(--radius); padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: var(--danger); font-weight: 600; }
+
+  .cat-header td { background: #F0F4F3 !important; font-weight: 700; font-size: 11px; color: var(--text-muted); padding: 6px 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .cat-header:hover td { background: #F0F4F3 !important; }
+
+  .order-panel { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--border); padding: 20px; }
+  .order-panel h2 { font-size: 16px; margin-bottom: 4px; }
+  .order-panel .sub { color: var(--text-muted); font-size: 12px; margin-bottom: 16px; }
+
+  .order-section { margin-bottom: 20px; }
+  .order-section h3 { font-size: 14px; font-weight: 700; color: var(--accent); margin-bottom: 8px; padding-bottom: 4px; border-bottom: 2px solid var(--accent-light); }
+
+  .order-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+  .order-table th { background: #F0F4F3; padding: 8px 12px; text-align: right; font-size: 11px; font-weight: 700; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+  .order-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .makat-cell { font-family: monospace; font-size: 13px; font-weight: 700; color: var(--accent); }
+  .qty-order { font-size: 15px; font-weight: 700; color: var(--danger); }
+
+  .copy-box { background: #F0F4F3; border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; font-family: monospace; font-size: 12px; white-space: pre-wrap; margin: 12px 0; max-height: 350px; overflow-y: auto; direction: rtl; }
+
+  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 1000; align-items: center; justify-content: center; }
+  .modal-bg.open { display: flex; }
+  .modal { background: var(--surface); border-radius: 12px; padding: 24px; width: 440px; max-width: 95vw; box-shadow: 0 8px 32px rgba(0,0,0,0.18); max-height: 90vh; overflow-y: auto; }
+  .modal h3 { font-size: 16px; margin-bottom: 16px; }
+  .form-row { margin-bottom: 12px; }
+  .form-row label { display: block; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; }
+  .form-row input, .form-row select { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px; outline: none; background: var(--surface); }
+  .form-row input:focus, .form-row select:focus { border-color: var(--accent); }
+  .modal-btns { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+
+  .empty { text-align: center; padding: 40px; color: var(--text-muted); }
+  .empty .icon { font-size: 36px; margin-bottom: 8px; }
+
+  .supplier-tag { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-right: 4px; }
+  .sup-raz { background: #E8F4FD; color: #1A6B9A; }
+  .sup-klim { background: #E8FDF0; color: #1A6B34; }
+  .sup-super { background: #FDF4E8; color: #9A5C1A; }
+  .sup-other { background: #F4E8FD; color: #6B1A9A; }
+
+
+  .reminder-bar { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 16px; border-radius:var(--radius); margin-bottom:16px; font-size:13px; font-weight:600; flex-wrap:wrap; }
+  .reminder-bar.due { background:#FEF5E7; border:1px solid #f5c97a; color:var(--warn); }
+  .reminder-bar.ok  { background:var(--ok-bg); border:1px solid #a8d5b5; color:var(--ok); }
+  .pending-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 12px; display:flex; gap:14px; align-items:flex-start; }
+  .pending-card img { width:80px; height:80px; object-fit:cover; border-radius:6px; border:1px solid var(--border); flex-shrink:0; }
+  .pending-card .info { flex:1; }
+  .pending-card .info h4 { font-size:14px; font-weight:700; margin-bottom:4px; }
+  .pending-card .info .meta { font-size:12px; color:var(--text-muted); }
+  .pending-actions { display:flex; gap:8px; margin-top:8px; }
+  @media (max-width: 600px) { .main { padding: 12px; } header { padding: 12px 16px; } .tabs { padding: 0 8px; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div><h1>🏥 ניהול ציוד ותרופות</h1></div>
+  <span>ד"ר רונן הולנד | גבעתיים</span>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab('inventory')">📦 כל המלאי</button>
+  <button class="tab" onclick="showTab('meds')">💊 תרופות</button>
+  <button class="tab" onclick="showTab('supplies')">🩺 ציוד קלים פלוס</button>
+  <button class="tab" onclick="showTab('order')">🛒 הזמנה</button>
+  <button class="tab" id="tab-btn-pending" onclick="showTab('pending')">📋 ממתינים לאישור <span id="pending-badge" style="display:none;background:#C0392B;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-right:4px"></span></button>
+</div>
+
+<div class="main">
+
+  <!-- INVENTORY TAB -->
+  <div id="tab-inventory">
+    <div id="reminder-container"></div>
+  <div id="alerts-container"></div>
+    <div class="toolbar">
+      <input type="text" id="search" placeholder="🔍 חיפוש לפי שם, מק&quot;ט..." oninput="renderInventory('all')">
+      <button class="btn btn-outline" onclick="filterLow('all')">⚠️ רק חסרים</button>
+      <button class="btn btn-outline" onclick="clearFilter('all')">הכל</button>
+      <button class="btn btn-primary" onclick="openAddModal()">+ פריט חדש</button>
+      <button class="btn" style="background:#7A4E9E;color:#fff;font-weight:700" onclick="openUnknownModal()">📷 פריט לא מוכר</button>
+      <button class="btn" style="background:#2C3A5E;color:#fff;font-weight:700" onclick="generateClaudeReport()">📊 דוח לClaude</button>
+
+    </div>
+    <div class="table-wrap"><table><thead><tr>
+      <th>מק"ט</th><th>שם פריט</th><th>ספק</th><th>מלאי</th><th>מינימום</th><th>סטטוס</th><th>כמות להזמנה</th><th>פעולות</th>
+    </tr></thead><tbody id="inventory-body-all"></tbody></table></div>
+  </div>
+
+  <!-- MEDS TAB -->
+  <div id="tab-meds" style="display:none">
+    <div class="toolbar">
+      <input type="text" id="search-meds" placeholder="🔍 חיפוש תרופה..." oninput="renderInventory('meds')">
+      <button class="btn btn-outline" onclick="filterLow('meds')">⚠️ רק חסרים</button>
+      <button class="btn btn-outline" onclick="clearFilter('meds')">הכל</button>
+    </div>
+    <div class="table-wrap"><table><thead><tr>
+      <th>מק"ט / ברקוד</th><th>שם תרופה</th><th>קטגוריה</th><th>מלאי</th><th>מינימום</th><th>סטטוס</th><th>כמות להזמנה</th><th>פעולות</th>
+    </tr></thead><tbody id="inventory-body-meds"></tbody></table></div>
+  </div>
+
+  <!-- SUPPLIES TAB -->
+  <div id="tab-supplies" style="display:none">
+    <div class="toolbar">
+      <input type="text" id="search-supplies" placeholder="🔍 חיפוש ציוד..." oninput="renderInventory('supplies')">
+      <button class="btn btn-outline" onclick="filterLow('supplies')">⚠️ רק חסרים</button>
+      <button class="btn btn-outline" onclick="clearFilter('supplies')">הכל</button>
+    </div>
+    <div class="table-wrap"><table><thead><tr>
+      <th>מק"ט</th><th>שם פריט</th><th>קטגוריה</th><th>מלאי</th><th>מינימום</th><th>סטטוס</th><th>כמות להזמנה</th><th>פעולות</th>
+    </tr></thead><tbody id="inventory-body-supplies"></tbody></table></div>
+  </div>
+
+  <!-- PENDING TAB -->
+  <div id="tab-pending" style="display:none">
+    <div class="order-panel">
+      <h2>📋 פריטים ממתינים לאישור רוני</h2>
+      <p class="sub">פריטים שדניאל צילמה ולא קיימים עדיין במסד הנתונים</p>
+      <div id="pending-list"></div>
+    </div>
+  </div>
+
+  <!-- ORDER TAB -->
+  <div id="tab-order" style="display:none">
+    <div class="order-panel">
+      <h2>🛒 הזמנות לספקים</h2>
+      <p class="sub">פריטים שהגיעו למינימום – מסודרים לפי ספק</p>
+      <div class="toolbar" style="margin-bottom:12px">
+        <button class="btn btn-primary" onclick="generateOrder()">🔄 עדכן הזמנה</button>
+        <button class="btn btn-outline" onclick="copyOrder('klim')">📋 העתק קלים פלוס</button>
+        <button class="btn btn-outline" onclick="copyOrder('raz')">📋 העתק רז רוקחות</button>
+        <button class="btn btn-outline" onclick="printOrder()">🖨️ הדפס</button>
+      </div>
+      <div id="order-content"><div class="empty"><div class="icon">🛒</div>לחץ "עדכן הזמנה" לייצור רשימה</div></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- REPORT MODAL -->
+<div class="modal-bg" id="report-modal">
+  <div class="modal" style="width:560px">
+    <h3>📊 דוח מלאי לClaude</h3>
+    <p style="color:var(--text-muted);font-size:12px;margin-bottom:12px">העתק את הטקסט והדבק לClaude לקבלת ניתוח</p>
+    <textarea id="report-text" style="width:100%;height:320px;font-family:monospace;font-size:12px;border:1px solid var(--border);border-radius:var(--radius);padding:10px;resize:none;direction:rtl;line-height:1.6" readonly></textarea>
+    <div class="modal-btns" style="margin-top:12px">
+      <button class="btn btn-outline" onclick="closeReportModal()">סגור</button>
+      <button class="btn btn-primary" onclick="copyReport()">📋 העתק הכל</button>
+    </div>
+  </div>
+</div>
+
+<!-- UNKNOWN ITEM MODAL -->
+<div class="modal-bg" id="unknown-modal">
+  <div class="modal">
+    <h3>📷 פריט לא מוכר</h3>
+    <p style="color:var(--text-muted);font-size:12px;margin-bottom:16px">צלמי את הפריט, הכניסי כמות והערה. רוני יסווג אותו מאוחר יותר.</p>
+    <div class="form-row">
+      <label>תמונה (אופציונלי)</label>
+      <input type="file" accept="image/*" capture="environment" id="u-photo" onchange="previewPhoto(this)" style="width:100%;font-size:13px">
+      <img id="u-preview" style="display:none;max-width:100%;margin-top:8px;border-radius:6px;max-height:200px;object-fit:contain">
+    </div>
+    <div class="form-row">
+      <label>תיאור / שם הפריט</label>
+      <input type="text" id="u-name" placeholder="לדוגמה: משחה לבנה בקופסא ירוקה">
+    </div>
+    <div class="form-row">
+      <label>כמות שנספרה</label>
+      <input type="number" id="u-qty" min="0" value="1" inputmode="numeric">
+    </div>
+    <div class="form-row">
+      <label>הערה</label>
+      <input type="text" id="u-note" placeholder="לדוגמה: נמצא במגירה השמאלית">
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-outline" onclick="closeUnknownModal()">ביטול</button>
+      <button class="btn btn-primary" onclick="saveUnknown()">שלח לרוני</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <h3 id="modal-title">הוספת פריט</h3>
+    <div class="form-row"><label>מק"ט / ברקוד</label><input type="text" id="f-makat" placeholder="לדוגמה: 830 או 7290008013352"></div>
+    <div class="form-row"><label>שם הפריט</label><input type="text" id="f-name" placeholder="לדוגמה: עזרקאין 1% אמפולות"></div>
+    <div class="form-row"><label>ספק</label>
+      <select id="f-supplier">
+        <option value="klim">קלים פלוס</option>
+        <option value="raz">רז רוקחות</option>
+        <option value="super">סופר-פארם / בית מרקחת</option>
+        <option value="other">אחר</option>
+      </select>
+    </div>
+    <div class="form-row"><label>קטגוריה</label>
+      <select id="f-cat">
+        <optgroup label="תרופות">
+          <option>קיטי בדיקות מהירות</option>
+          <option>אנטיביוטיקה</option>
+          <option>הרדמה מקומית</option>
+          <option>אמפולות / זריקות</option>
+          <option>תרופות כלליות</option>
+          <option>קרמים ומשחות</option>
+          <option>ספריי / תרסיס</option>
+        </optgroup>
+        <optgroup label="ציוד רפואי">
+          <option>פדים וגזה</option>
+          <option>מחטים ומזרקים</option>
+          <option>כוסות ומכלים</option>
+          <option>אלכוהול וחיטוי</option>
+          <option>פלסטר ותחבושות</option>
+          <option>ציוד פיזיקלי</option>
+          <option>שונות</option>
+        </optgroup>
+      </select>
+    </div>
+    <div class="form-row"><label>מלאי נוכחי</label><input type="number" id="f-stock" min="0" value="0"></div>
+    <div class="form-row"><label>מינימום במלאי</label><input type="number" id="f-min" min="0" value="1"></div>
+    <div class="form-row"><label>כמות להזמנה</label><input type="number" id="f-orderqty" min="1" value="1"></div>
+    <div class="form-row"><label>הערה (גודל אריזה, ריכוז וכד')</label><input type="text" id="f-note" placeholder="אופציונלי"></div>
+    <div class="modal-btns">
+      <button class="btn btn-outline" onclick="closeModal()">ביטול</button>
+      <button class="btn btn-primary" onclick="saveItem()">שמור</button>
+    </div>
+  </div>
+</div>
+
+<script>
+
+// ===================== REMINDER =====================
+function renderReminder() {
+  const c = document.getElementById('reminder-container');
+  if (!c) return;
+  const lastStr = localStorage.getItem('last_inventory_count');
+  const now = new Date();
+  const today = now.toLocaleDateString('he-IL');
+
+  if (!lastStr) {
+    c.innerHTML = `<div class="reminder-bar due">
+      📋 טרם בוצעה ספירת מלאי – מומלץ לספור פעם בחודש
+      <button class="btn btn-outline btn-sm" onclick="markCounted()">✅ ספרתי עכשיו</button>
+    </div>`;
+    return;
+  }
+
+  const last = new Date(lastStr);
+  const diffDays = Math.floor((now - last) / (1000*60*60*24));
+  const lastLabel = last.toLocaleDateString('he-IL');
+
+  if (diffDays >= 30) {
+    c.innerHTML = `<div class="reminder-bar due">
+      ⏰ ספירת מלאי אחרונה: <strong>${lastLabel}</strong> – עברו ${diffDays} ימים, הגיע הזמן לספור!
+      <button class="btn btn-outline btn-sm" onclick="markCounted()">✅ ספרתי עכשיו</button>
+    </div>`;
+  } else {
+    const nextDate = new Date(last);
+    nextDate.setDate(nextDate.getDate() + 30);
+    const nextLabel = nextDate.toLocaleDateString('he-IL');
+    c.innerHTML = `<div class="reminder-bar ok">
+      ✅ ספירת מלאי אחרונה: <strong>${lastLabel}</strong> – הספירה הבאה ב־<strong>${nextLabel}</strong>
+      <button class="btn btn-outline btn-sm" style="color:var(--accent);border-color:var(--accent)" onclick="markCounted()">ספרתי שוב</button>
+    </div>`;
+  }
+}
+
+function markCounted() {
+  localStorage.setItem('last_inventory_count', new Date().toISOString());
+  renderReminder();
+  if (confirm('✅ ספירת המלאי נשמרה!\n\nלייצר דוח לClaude עכשיו?')) {
+    generateClaudeReport();
+  }
+}
+
+// ===================== DATA =====================
+const MEDS = [
+  // רז רוקחות – הרדמה מקומית
+  { makat:'7290015863490', name:'לידוקאין HCl 1% סאלף 10מ"ג/מ"ל 5×אמפ (רשום)', cat:'הרדמה מקומית', supplier:'raz', stock:2, min:1, orderQty:1, note:'קופסא = 5 אמפ' },
+  { makat:'7321839711084', name:'קסילוקאין ספריי 10% 50 מ"ל', cat:'הרדמה מקומית', supplier:'raz', stock:1, min:1, orderQty:1, note:'' },
+  { makat:'7290018490228', name:'לידוקאין RAZ ספריי 10% 80G', cat:'הרדמה מקומית', supplier:'raz', stock:0, min:1, orderQty:2, note:'REG' },
+
+  // רז רוקחות – אנטיביוטיקה
+  { makat:'7290000806402', name:'דוקסילין 100 מ"ג', cat:'אנטיביוטיקה', supplier:'raz', stock:3, min:2, orderQty:100, note:'קופסא = 10 טבליות' },
+  { makat:'7290006676962', name:'פאן צפריקסון 1ג (רוציפין)', cat:'אנטיביוטיקה', supplier:'raz', stock:1, min:1, orderQty:1, note:'קופסא = 10 ויאלים' },
+
+  // רז רוקחות – אמפולות / זריקות
+  { makat:'7290008013352', name:'עזרקאין 1% אמפולות', cat:'אמפולות / זריקות', supplier:'raz', stock:2, min:2, orderQty:1, note:'קופסא = 5 אמפ' },
+  { makat:'031973086',     name:'לידוקאין 1% אמפולות (A5I016)', cat:'אמפולות / זריקות', supplier:'raz', stock:1, min:1, orderQty:1, note:'100 אמפ' },
+  { makat:'7290000809106', name:'דרמקומביין קרם 15 גר׳ – מגיע 120 יח׳ בקופסא', cat:'קרמים ומשחות', supplier:'raz', stock:2, min:1, orderQty:1, note:'' },
+  { makat:'7290110730482', name:'אביטרון 75 מ"ג/3מ"ל להזרקה', cat:'אמפולות / זריקות', supplier:'raz', stock:0, min:1, orderQty:1, note:'קופסא = 5 אמפ' },
+  { makat:'7290015863124', name:'אדרנלין סאלף 1מ"ג/מ"ל תמיסה להזרקה', cat:'אמפולות / זריקות', supplier:'raz', stock:1, min:1, orderQty:1, note:'קופסא = 10 אמפ' },
+  { makat:'7290008012751', name:'מונורול 3 גרם שטי', cat:'תרופות כלליות', supplier:'raz', stock:2, min:1, orderQty:1, note:'' },
+
+  // רז רוקחות – פניצילין / בנזטציל
+  { makat:'1926',          name:'בנזטציל U 1,200,000 ויאל – תכשיר 29 ג׳', cat:'אמפולות / זריקות', supplier:'raz', stock:2, min:2, orderQty:1, note:'קופסא = 1 ויאל' },
+
+  // רז רוקחות – אזניל
+  { makat:'7290010355167', name:'אזניל 250 מ"ג 6 קפליות', cat:'אנטיביוטיקה', supplier:'raz', stock:2, min:1, orderQty:1, note:'' },
+
+  // רז רוקחות – טרולאקסין
+  { makat:'7290104368202', name:'טרולאקסין קרם 200 מ"ל מדיסקין', cat:'קרמים ומשחות', supplier:'raz', stock:1, min:1, orderQty:1, note:'' },
+
+  // רז רוקחות – אמלה קרם
+  { makat:'7321839710346', name:'אמלה קרם N3 5%30 – היפודרמית 100 יח PIC', cat:'קרמים ומשחות', supplier:'raz', stock:0, min:1, orderQty:1, note:'' },
+
+  // רז רוקחות – פפברין
+  { makat:'1847201',       name:'פפברין 40מ"ג/2מ"ל', cat:'אמפולות / זריקות', supplier:'raz', stock:1, min:1, orderQty:1, note:'קופסא = 100 אמפ' },
+
+  // רז רוקחות – צפטריאקסון ויט
+  { makat:'7290015793087', name:'צפטריאקסון-ויט 1 גרם', cat:'אנטיביוטיקה', supplier:'raz', stock:0, min:1, orderQty:1, note:'קופסא = 10 ויאלים' },
+
+  // רז רוקחות – נאטריביק
+  { makat:'2117471',       name:'Natribic 84מ"ג/מ"ל (Bicarbonate Sodium) STEROP', cat:'אמפולות / זריקות', supplier:'raz', stock:0, min:1, orderQty:1, note:'20 ויאל' },
+
+  // רז רוקחות – תרופות חדשות
+  { makat:'72989814',      name:'Elecom Cream 15GR', cat:'קרמים ומשחות', supplier:'raz', stock:1, min:1, orderQty:1, note:'120 יח בקופסא' },
+  { makat:'7290106062863', name:'Asival 10MG/2ML (וליום IV)', cat:'אמפולות / זריקות', supplier:'raz', stock:1, min:1, orderQty:1, note:'קופסא = 10 אמפ' },
+  { makat:'7290102062348', name:'Fluconazole TEVA 150MG 1 קפסולה', cat:'תרופות כלליות', supplier:'raz', stock:2, min:1, orderQty:1, note:'' },
+  { makat:'7290010287109', name:'Lidopri-Avneir 5% 30G קרם הרדמה', cat:'קרמים ומשחות', supplier:'raz', stock:1, min:1, orderQty:1, note:'EMLA גנרי' },
+  { makat:'5761168',       name:'Medaxone (Ceftriaxone) 1g/vial', cat:'אמפולות / זריקות', supplier:'raz', stock:0, min:1, orderQty:1, note:'קופסא = 10 ויאלים' },
+  { makat:'3582910013679', name:'Flagyl 250MG ×20 טבליות', cat:'תרופות כלליות', supplier:'raz', stock:1, min:1, orderQty:1, note:'' },
+
+  // בית מרקחת ברק – חדש
+  { makat:'36485',  name:'Vita-Merfen Oint 100GR', cat:'קרמים ומשחות', supplier:'super', stock:0, min:1, orderQty:1, note:'בית מרקחת ברק' },
+  { makat:'28124',  name:'Bepanthen Plus CR 100G', cat:'קרמים ומשחות', supplier:'super', stock:0, min:1, orderQty:1, note:'בית מרקחת ברק / סופר-פארם' },
+
+  // סופר-פארם – Bimix
+  { makat:'7290009130379', name:'Bimix REG Intracavernous', cat:'אמפולות / זריקות', supplier:'super', stock:1, min:1, orderQty:1, note:'מק"ט חנות: 45326' },
+  { makat:'7290009128475', name:'Bimix FORTE Intracavernous', cat:'אמפולות / זריקות', supplier:'super', stock:1, min:1, orderQty:1, note:'מק"ט חנות: 45322' },
+
+  // בית מרקחת / סופר-פארם – שונות
+  { makat:'68084',         name:'Azenil 250MG', cat:'אנטיביוטיקה', supplier:'super', stock:1, min:1, orderQty:1, note:'6 קפסולות' },
+  { makat:'89581',         name:'Flagyl Tab 250MG', cat:'תרופות כלליות', supplier:'super', stock:1, min:1, orderQty:1, note:'30 טבליות' },
+  { makat:'35241',         name:'Esracain 1% 10ML', cat:'הרדמה מקומית', supplier:'super', stock:2, min:2, orderQty:1, note:'קופסא = 50 אמפ' },
+  { makat:'7290008013352-S', name:'Esracain 1% 10ML (סופר-פארם)', cat:'הרדמה מקומית', supplier:'super', stock:0, min:1, orderQty:1, note:'קופסא = 50 אמפ' },
+  { makat:'7290013820029', name:'לייף גל סיכה אינטימי', cat:'קרמים ומשחות', supplier:'super', stock:1, min:1, orderQty:2, note:'' },
+  { makat:'7290010859290', name:'Merfen Spray', cat:'ספריי / תרסיס', supplier:'super', stock:1, min:1, orderQty:1, note:'' },
+  { makat:'7290010449810', name:'לייף פלסטרים שקופים', cat:'קרמים ומשחות', supplier:'super', stock:1, min:1, orderQty:1, note:'' },
+  { makat:'72526',         name:'Biafin 186G', cat:'קרמים ומשחות', supplier:'super', stock:0, min:1, orderQty:2, note:'' },
+  { makat:'28654',         name:'CeraVe Smoothing', cat:'קרמים ומשחות', supplier:'super', stock:1, min:1, orderQty:1, note:'' },
+
+  // ── קיטי בדיקות מהירות ──
+  // דבורה חסון – HIV
+  { makat:'HIV-102', name:'HIV 1/2 STAT-PAK', cat:'קיטי בדיקות מהירות', supplier:'dvora', stock:0, min:5, orderQty:10, note:'קופסא = 20 קסטות' },
+
+  // רימיפארם – קיטי STD
+  { makat:'4023', name:'HBsAg Rapid Test Cassette', cat:'קיטי בדיקות מהירות', supplier:'rimipharm', stock:0, min:2, orderQty:3, note:'קופסא = 25 בדיקות' },
+  { makat:'4022', name:'Syphilis Cassette 25 Test', cat:'קיטי בדיקות מהירות', supplier:'rimipharm', stock:0, min:2, orderQty:3, note:'קופסא = 25 בדיקות' },
+  { makat:'4020', name:'HCV Cassette 25 Test', cat:'קיטי בדיקות מהירות', supplier:'rimipharm', stock:0, min:2, orderQty:3, note:'קופסא = 25 בדיקות' },
+,
+
+  // DYN דיאגנוסטיקה – סטיקים לשתן
+  { makat:'ERBA-URPH0028', name:'Dekaphan Laura – סטיקים לשתן', cat:'קיטי בדיקות מהירות', supplier:'dyn', stock:0, min:1, orderQty:5, note:'קופסא = 170 יח' },
+
+  // מדי-רום – שואב עשן
+  { makat:'SF35', name:'Smoke Shark 2 Filter – שואב עשן', cat:'ציוד פיזיקלי', supplier:'medirom', stock:0, min:1, orderQty:2, note:'יחידה בודדת' }
+];
+
+const SUPPLIES = [
+  { makat:'830',  name:'פד גזה 10*10 1/100', cat:'פדים וגזה', supplier:'klim', stock:3, min:2, orderQty:15, note:'' },
+  { makat:'514',  name:'פד גזה 7.5*7.5 ס"מ 1/100', cat:'פדים וגזה', supplier:'klim', stock:2, min:1, orderQty:10, note:'' },
+  { makat:'229',  name:'מגבות פדיקור 60*40 1/100', cat:'פדים וגזה', supplier:'klim', stock:1, min:1, orderQty:1, note:'' },
+  { makat:'230',  name:'מגבות מניקור 40*30 1/100', cat:'פדים וגזה', supplier:'klim', stock:1, min:1, orderQty:1, note:'' },
+  { makat:'878',  name:'פד לא ארוג 7.5*7.5 ס"מ 1/300', cat:'פדים וגזה', supplier:'klim', stock:1, min:1, orderQty:2, note:'' },
+  { makat:'1113', name:'מזרק אינסולין 1 מל +מחט 30 - 1/30 יח', cat:'מחטים ומזרקים', supplier:'klim', stock:2, min:2, orderQty:3, note:'' },
+  { makat:'1001', name:'מזרק 3 מל - 100 יח', cat:'מחטים ומזרקים', supplier:'klim', stock:1, min:1, orderQty:2, note:'' },
+  { makat:'1372', name:'מזרק 1 מל ללא מחט 1/100 יח', cat:'מחטים ומזרקים', supplier:'klim', stock:1, min:1, orderQty:1, note:'' },
+  { makat:'425',  name:'מזרק 5 מל 100 יח', cat:'מחטים ומזרקים', supplier:'klim', stock:1, min:1, orderQty:2, note:'' },
+  { makat:'1339', name:'מזרק 1 מל לאור לוק 1/100 ד"י', cat:'מחטים ומזרקים', supplier:'klim', stock:0, min:1, orderQty:1, note:'' },
+  { makat:'862',  name:'מזרק 50-60 מל 25 אכלה', cat:'מחטים ומזרקים', supplier:'klim', stock:0, min:1, orderQty:1, note:'' },
+  { makat:'2954', name:'מזרק טוברקולין 1 מל +מחט 0.5*27 פריקה 100 יח', cat:'מחטים ומזרקים', supplier:'klim', stock:0, min:1, orderQty:1, note:'לבדיקת מנטו' },
+  { makat:'430',  name:'מחט כתומה 25G X5/8 כמות 100', cat:'מחטים ומזרקים', supplier:'klim', stock:2, min:1, orderQty:1, note:'' },
+  { makat:'861',  name:'מחט G30 צהובה היפודרמית 100 יח PIC', cat:'מחטים ומזרקים', supplier:'klim', stock:2, min:1, orderQty:2, note:'' },
+  { makat:'848',  name:'מחט 1.5*18 ורודה 1/100', cat:'מחטים ומזרקים', supplier:'klim', stock:1, min:1, orderQty:1, note:'' },
+  { makat:'211',  name:'מחט אפורה BD 27G - 1/100', cat:'מחטים ומזרקים', supplier:'klim', stock:1, min:1, orderQty:2, note:'' },
+  { makat:'845',  name:'מחט ירוקה 1.5 21GX כמות 100 יח', cat:'מחטים ומזרקים', supplier:'klim', stock:1, min:1, orderQty:1, note:'' },
+  { makat:'7322', name:'מחט סטרילית 22G*1.5 שחור PIC 1/100', cat:'מחטים ומזרקים', supplier:'klim', stock:0, min:1, orderQty:1, note:'' },
+  { makat:'BD304000', name:'מחט BD 30GX1/2 YELLOW קופסא 100', cat:'מחטים ומזרקים', supplier:'klim', stock:0, min:1, orderQty:2, note:'' },
+  { makat:'BD300600', name:'מחט 25GX5/8 ORANGE קופסא 100', cat:'מחטים ומזרקים', supplier:'klim', stock:0, min:1, orderQty:2, note:'' },
+  { makat:'DBT320933', name:'מזרק 0.5 מ"ל BD 0.5X30GX8MM', cat:'מחטים ומזרקים', supplier:'klim', stock:0, min:1, orderQty:2, note:'' },
+  { makat:'2332', name:'מחט היפודרמית סטרילית 32G בוטקס', cat:'מחטים ומזרקים', supplier:'klim', stock:1, min:1, orderQty:1, note:'' },
+  { makat:'3557', name:'דוקרן בטיחותי 100 יח 21G ירוק מבוגר', cat:'מחטים ומזרקים', supplier:'klim', stock:0, min:1, orderQty:1, note:'' },
+  { makat:'834',  name:'מחט צהובה 30X1/2', cat:'מחטים ומזרקים', supplier:'klim', stock:1, min:1, orderQty:1, note:'' },
+  { makat:'1060', name:'מחט 30*1/2 BD', cat:'מחטים ומזרקים', supplier:'klim', stock:0, min:1, orderQty:1, note:'' },
+  { makat:'1224', name:'כוס שתן מכסה הברגה 125 מל אדום (5 סטרילי)', cat:'כוסות ומכלים', supplier:'klim', stock:5, min:2, orderQty:1, note:'1/300 יח' },
+  { makat:'512',  name:'אלכוהול 70% 1 ליטר', cat:'אלכוהול וחיטוי', supplier:'klim', stock:2, min:1, orderQty:1, note:'' },
+  { makat:'1231', name:'מטליות אלכוהול חיטוי מזון 1/180', cat:'אלכוהול וחיטוי', supplier:'klim', stock:3, min:2, orderQty:1, note:'' },
+  { makat:'997',  name:'שיק מגלח רפואי 100 יח', cat:'אלכוהול וחיטוי', supplier:'klim', stock:1, min:1, orderQty:1, note:'' },
+  { makat:'1382', name:'תרסיס חיטוי משטחים אלכוהול שוורץ 750 מ"ל', cat:'אלכוהול וחיטוי', supplier:'klim', stock:1, min:1, orderQty:1, note:'' },
+  { makat:'1250', name:'גל אולטרסאונד 260 מ"ל', cat:'אלכוהול וחיטוי', supplier:'klim', stock:2, min:1, orderQty:2, note:'' },
+  { makat:'FY1907', name:'גל אולטרסאונד סטרילי 20 מ"ל', cat:'אלכוהול וחיטוי', supplier:'klim', stock:1, min:1, orderQty:10, note:'' },
+  { makat:'849',  name:'פלסטר נגד מים קלאסי 80 יח', cat:'פלסטר ותחבושות', supplier:'klim', stock:2, min:1, orderQty:1, note:'' },
+  { makat:'8721', name:'סט תפירה לתפירה סטרילי מדיפרו', cat:'פלסטר ותחבושות', supplier:'klim', stock:1, min:1, orderQty:2, note:'' },
+  { makat:'92812', name:'פלסטר פרו פיקס + משבצות לחיתוך 10מ*7.5ס"מ', cat:'פלסטר ותחבושות', supplier:'klim', stock:0, min:1, orderQty:1, note:'' },
+  { makat:'0904-3-10', name:'סקלפל כירורגי עם ידית פלסטיק 10/11/12/15', cat:'ציוד פיזיקלי', supplier:'klim', stock:1, min:1, orderQty:1, note:'מידה 12' },
+];
+
+let items = [];
+let filterActive = { all: false, meds: false, supplies: false };
+let editingId = null;
+let currentTab = 'all';
+
+function loadData() {
+  const saved = localStorage.getItem('clinic_inventory_v3');
+  const allDefault = [
+    ...MEDS.map((it, i) => ({ ...it, id: i })),
+    ...SUPPLIES.map((it, i) => ({ ...it, id: MEDS.length + i })),
+  ];
+  if (saved) {
+    items = JSON.parse(saved);
+    // מיזוג – הוסף פריטים חדשים שלא קיימים עדיין
+    const existingMakats = new Set(items.map(i => i.makat));
+    const newItems = allDefault.filter(i => !existingMakats.has(i.makat));
+    if (newItems.length > 0) {
+      console.log('מוסיף', newItems.length, 'פריטים חדשים');
+      items = [...items, ...newItems];
+      saveData();
+    }
+  } else {
+    items = allDefault;
+    saveData();
+  }
+}
+
+async function initApp() {
+  // Load from localStorage first (fast)
+  loadData();
+  renderInventory('all');
+  renderReminder();
+  updatePendingBadge();
+
+  // Show sync indicator
+  showSyncStatus('מתחבר ל-Firebase...', 'warn');
+
+  // Then try Firebase
+  const loaded = await loadFromFirebase();
+  if (loaded) {
+    renderInventory('all');
+    showSyncStatus('מסונכרן ✅', 'ok');
+    setTimeout(() => hideSyncStatus(), 3000);
+  } else {
+    showSyncStatus('עובד במצב מקומי', 'warn');
+    setTimeout(() => hideSyncStatus(), 3000);
+  }
+}
+
+function showSyncStatus(msg, type) {
+  let el = document.getElementById('sync-status');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'sync-status';
+    el.style.cssText = 'position:fixed;bottom:16px;left:16px;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:700;z-index:9999;transition:opacity 0.3s';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.background = type === 'ok' ? '#EAF6EE' : '#FEF5E7';
+  el.style.color = type === 'ok' ? '#1D6B34' : '#B8640A';
+  el.style.border = type === 'ok' ? '1px solid #a8d5b5' : '1px solid #f5c97a';
+  el.style.opacity = '1';
+}
+
+function hideSyncStatus() {
+  const el = document.getElementById('sync-status');
+  if (el) el.style.opacity = '0';
+}
+
+function saveData() {
+  localStorage.setItem('clinic_inventory_v3', JSON.stringify(items));
+  syncToFirebase();
+}
+
+async function syncToFirebase() {
+  if (!window._firebaseReady) return;
+  try {
+    const col = window._fsCollection(window._db, 'inventory');
+    for (const item of items) {
+      const d = window._fsDoc(window._db, 'inventory', String(item.id));
+      await window._fsSetDoc(d, item);
+    }
+  } catch(e) { console.warn('Firebase sync error:', e); }
+}
+
+async function loadFromFirebase() {
+  if (!window._firebaseReady) return false;
+  try {
+    const col = window._fsCollection(window._db, 'inventory');
+    const snap = await window._fsGetDocs(col);
+    if (snap.empty) return false;
+    items = snap.docs.map(d => d.data());
+    localStorage.setItem('clinic_inventory_v3', JSON.stringify(items));
+    console.log('✅ נטען מ-Firebase:', items.length, 'פריטים');
+    return true;
+  } catch(e) {
+    console.warn('Firebase load error:', e);
+    return false;
+  }
+}
+
+function getStatus(item) {
+  if (item.stock === 0) return 'danger';
+  if (item.stock <= item.min) return 'warn';
+  return 'ok';
+}
+
+function badgeHtml(st, stock) {
+  if (st === 'danger') return `<span class="badge badge-danger">⛔ אזל</span>`;
+  if (st === 'warn') return `<span class="badge badge-warn">⚠️ נמוך (${stock})</span>`;
+  return `<span class="badge badge-ok">✅ תקין</span>`;
+}
+
+function supplierTag(sup) {
+  const map = { klim: ['sup-klim','קלים+'], raz: ['sup-raz','רז'], super: ['sup-super','סופר'], dvora: ['sup-raz','דבורה'], rimipharm: ['sup-other','רימי'], dyn: ['sup-raz','DYN'], medirom: ['sup-other','מדי-רום'], other: ['sup-other','אחר'] };
+  const [cls, label] = map[sup] || map.other;
+  return `<span class="supplier-tag ${cls}">${label}</span>`;
+}
+
+function renderInventory(scope) {
+  const searchId = scope === 'all' ? 'search' : `search-${scope}`;
+  const q = (document.getElementById(searchId)?.value || '').trim().toLowerCase();
+  const bodyId = `inventory-body-${scope}`;
+
+  let pool = items;
+  if (scope === 'meds') pool = items.filter(i => ['אנטיביוטיקה','הרדמה מקומית','אמפולות / זריקות','תרופות כלליות','קרמים ומשחות','ספריי / תרסיס','קיטי בדיקות מהירות'].includes(i.cat));
+  if (scope === 'supplies') pool = items.filter(i => !['אנטיביוטיקה','הרדמה מקומית','אמפולות / זריקות','תרופות כלליות','קרמים ומשחות','ספריי / תרסיס','קיטי בדיקות מהירות'].includes(i.cat));
+
+  let filtered = pool.filter(it => {
+    const matchQ = !q || it.name.toLowerCase().includes(q) || it.makat.toLowerCase().includes(q);
+    const matchLow = !filterActive[scope] || getStatus(it) !== 'ok';
+    return matchQ && matchLow;
+  });
+
+  // במסך תרופות – ממיינים רז קודם, אח"כ קטגוריה
+  if (scope === 'meds') {
+    const supOrder = { raz: 0, super: 1, other: 2, klim: 3 };
+    filtered.sort((a, b) => {
+      const sd = (supOrder[a.supplier] ?? 9) - (supOrder[b.supplier] ?? 9);
+      if (sd !== 0) return sd;
+      return a.cat.localeCompare(b.cat, 'he');
+    });
+  }
+
+  const supNames = { raz:'🔵 רז רוקחות', super:'🟠 סופר-פארם / בית מרקחת', dvora:'🔴 דבורה חסון', rimipharm:'🟣 רימיפארם', dyn:'🔵 DYN', medirom:'🟤 מדי-רום', other:'⚪ אחר', klim:'🟢 קלים פלוס' };
+  const groupKey = item => scope === 'meds' ? item.supplier + '__' + item.cat : item.cat;
+  const groupLabel = key => {
+    if (scope !== 'meds') return key;
+    const parts = key.split('__');
+    return (supNames[parts[0]] || parts[0]) + ' – ' + parts[1];
+  };
+  const cats = [...new Set(filtered.map(groupKey))];
+  const body = document.getElementById(bodyId);
+  if (!body) return;
+  body.innerHTML = '';
+
+  cats.forEach(cat => {
+    const catItems = filtered.filter(i => groupKey(i) === cat);
+    const hrow = document.createElement('tr');
+    hrow.className = 'cat-header';
+    hrow.innerHTML = `<td colspan="8">📁 ${groupLabel(cat)}</td>`;
+    body.appendChild(hrow);
+
+    catItems.forEach(item => {
+      const st = getStatus(item);
+      const row = document.createElement('tr');
+      if (st === 'danger') row.classList.add('low-stock');
+      row.innerHTML = `
+        <td><span class="item-makat">${item.makat}</span></td>
+        <td><span class="item-name">${item.name}</span>${item.note ? `<br><small style="color:var(--text-muted)">${item.note}</small>` : ''}</td>
+        <td>${scope === 'all' ? supplierTag(item.supplier) : `<span style="color:var(--text-muted);font-size:12px">${item.cat}</span>`}</td>
+        <td><div class="qty-control">
+          <button onclick="changeStock(${item.id},-1)">−</button>
+          <input type="number" class="qty-input" value="${item.stock}" min="0"
+            onchange="setStock(${item.id}, this.value)"
+            onfocus="this.select()"
+            inputmode="numeric">
+          <button onclick="changeStock(${item.id},1)">+</button>
+        </div></td>
+        <td style="text-align:center">${item.min}</td>
+        <td>${badgeHtml(st, item.stock)}</td>
+        <td style="text-align:center;font-weight:700">${item.orderQty}</td>
+        <td>
+          <button class="btn btn-outline btn-sm" onclick="openEditModal(${item.id})">✏️</button>
+          <button class="btn btn-sm" style="background:#f5f5f5;border:1px solid var(--border)" onclick="deleteItem(${item.id})">🗑️</button>
+        </td>`;
+      body.appendChild(row);
+    });
+  });
+
+  if (filtered.length === 0) {
+    body.innerHTML = `<tr><td colspan="8"><div class="empty"><div class="icon">🔍</div>אין פריטים תואמים</div></td></tr>`;
+  }
+
+  if (scope === 'all') renderAlerts();
+}
+
+function renderAlerts() {
+  const low = items.filter(i => getStatus(i) !== 'ok');
+  const c = document.getElementById('alerts-container');
+  if (!c) return;
+  if (low.length === 0) { c.innerHTML = ''; return; }
+  const meds = low.filter(i => ['אנטיביוטיקה','הרדמה מקומית','אמפולות / זריקות','תרופות כלליות','קרמים ומשחות','ספריי / תרסיס'].includes(i.cat));
+  const sup = low.filter(i => !meds.includes(i));
+  let html = `<div class="alerts-bar">🔔 ${low.length} פריטים דורשים הזמנה`;
+  if (meds.length) html += ` | 💊 תרופות: ${meds.length}`;
+  if (sup.length) html += ` | 🩺 ציוד: ${sup.length}`;
+  html += '</div>';
+  c.innerHTML = html;
+}
+
+function setStock(id, val) {
+  const item = items.find(i => i.id === id);
+  if (!item) return;
+  const n = parseInt(val);
+  if (isNaN(n) || n < 0) return;
+  item.stock = n;
+  saveData();
+  renderAlerts();
+  renderReminder();
+}
+
+function changeStock(id, delta) {
+  const item = items.find(i => i.id === id);
+  if (!item) return;
+  item.stock = Math.max(0, item.stock + delta);
+  saveData();
+  renderInventory(currentTab);
+}
+
+function filterLow(scope) { filterActive[scope] = true; renderInventory(scope); }
+function clearFilter(scope) { filterActive[scope] = false; renderInventory(scope); }
+
+// ===================== MODAL =====================
+const MED_CATS = ['אנטיביוטיקה','הרדמה מקומית','אמפולות / זריקות','תרופות כלליות','קרמים ומשחות','ספריי / תרסיס','קיטי בדיקות מהירות'];
+
+function openAddModal() {
+  editingId = null;
+  document.getElementById('modal-title').textContent = 'הוספת פריט חדש';
+  ['f-makat','f-name','f-note'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-stock').value = 0;
+  document.getElementById('f-min').value = 1;
+  document.getElementById('f-orderqty').value = 1;
+  document.getElementById('f-supplier').value = 'klim';
+  document.getElementById('f-cat').value = 'שונות';
+  document.getElementById('modal').classList.add('open');
+}
+
+function openEditModal(id) {
+  editingId = id;
+  const item = items.find(i => i.id === id);
+  if (!item) return;
+  document.getElementById('modal-title').textContent = 'עריכת פריט';
+  document.getElementById('f-makat').value = item.makat;
+  document.getElementById('f-name').value = item.name;
+  document.getElementById('f-cat').value = item.cat;
+  document.getElementById('f-supplier').value = item.supplier || 'other';
+  document.getElementById('f-stock').value = item.stock;
+  document.getElementById('f-min').value = item.min;
+  document.getElementById('f-orderqty').value = item.orderQty;
+  document.getElementById('f-note').value = item.note || '';
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+function saveItem() {
+  const makat = document.getElementById('f-makat').value.trim();
+  const name = document.getElementById('f-name').value.trim();
+  if (!makat || !name) { alert('נא למלא מק"ט ושם'); return; }
+  const data = {
+    makat, name,
+    cat: document.getElementById('f-cat').value,
+    supplier: document.getElementById('f-supplier').value,
+    stock: parseInt(document.getElementById('f-stock').value) || 0,
+    min: parseInt(document.getElementById('f-min').value) || 1,
+    orderQty: parseInt(document.getElementById('f-orderqty').value) || 1,
+    note: document.getElementById('f-note').value.trim(),
+  };
+  if (editingId !== null) {
+    const idx = items.findIndex(i => i.id === editingId);
+    items[idx] = { ...items[idx], ...data };
+  } else {
+    data.id = Date.now();
+    items.push(data);
+  }
+  saveData();
+  // אם הגיע מממתינים – מחק אותו מהרשימה
+  const pendingId = parseInt(document.getElementById('modal').dataset.pendingId);
+  if (pendingId) {
+    pendingItems = pendingItems.filter(i => i.id !== pendingId);
+    savePending();
+    delete document.getElementById('modal').dataset.pendingId;
+  }
+  closeModal();
+  renderInventory(currentTab);
+}
+
+function deleteItem(id) {
+  if (!confirm('למחוק פריט זה?')) return;
+  items = items.filter(i => i.id !== id);
+  saveData(); renderInventory(currentTab);
+}
+
+// ===================== ORDER =====================
+function generateOrder() {
+  const toOrder = items.filter(i => getStatus(i) !== 'ok');
+  const c = document.getElementById('order-content');
+  if (toOrder.length === 0) {
+    c.innerHTML = `<div class="empty"><div class="icon">✅</div>כל הפריטים במלאי תקין!</div>`;
+    return;
+  }
+
+  const bySupplier = { klim: [], raz: [], super: [], dvora: [], rimipharm: [], dyn: [], medirom: [], other: [] };
+  toOrder.forEach(it => { (bySupplier[it.supplier] || bySupplier.other).push(it); });
+
+  const supNames = { klim:'קלים פלוס', raz:'רז רוקחות', super:'סופר-פארם / בית מרקחת', dvora:'דבורה חסון', rimipharm:'רימיפארם', dyn:'DYN דיאגנוסטיקה', medirom:'מדי-רום', other:'ספקים אחרים' };
+  const supEmoji = { klim:'🩺', raz:'💊', super:'🏪', dvora:'🔬', rimipharm:'🔬', dyn:'🔬', medirom:'⚡', other:'📦' };
+
+  let html = '';
+  Object.entries(bySupplier).forEach(([sup, sitems]) => {
+    if (!sitems.length) return;
+    html += `<div class="order-section">
+      <h3>${supEmoji[sup]} הזמנה ל${supNames[sup]} (${sitems.length} פריטים)</h3>
+      <table class="order-table"><thead><tr><th>מק"ט / ברקוד</th><th>שם פריט</th><th>כמות</th><th>הערה</th></tr></thead><tbody>`;
+    sitems.forEach(it => {
+      html += `<tr><td class="makat-cell">${it.makat}</td><td>${it.name}</td><td class="qty-order">${it.orderQty}</td><td style="color:var(--text-muted);font-size:12px">${it.note||''}</td></tr>`;
+    });
+    html += `</tbody></table></div>`;
+  });
+
+  // Text for copy
+  window._orderTexts = {};
+  Object.entries(bySupplier).forEach(([sup, sitems]) => {
+    if (!sitems.length) return;
+    let t = `הזמנה ל${supNames[sup]} – ${new Date().toLocaleDateString('he-IL')}\n`;
+    t += `ד"ר רונן הולנד | גבעתיים | טל: 0528800325\n`;
+    t += `────────────────────────────\n`;
+    sitems.forEach(it => {
+      t += `מק"ט: ${it.makat.padEnd(16)} כמות: ${it.orderQty}   ${it.name}\n`;
+    });
+    t += `────────────────────────────\n`;
+    t += `סה"כ: ${sitems.length} פריטים`;
+    window._orderTexts[sup] = t;
+  });
+
+  const allText = Object.values(window._orderTexts).join('\n\n══════════════════════════════\n\n');
+  html += `<div id="order-text-all" class="copy-box">${allText}</div>`;
+  c.innerHTML = html;
+}
+
+function copyOrder(sup) {
+  generateOrder();
+  const text = sup === 'all'
+    ? document.getElementById('order-text-all')?.textContent
+    : window._orderTexts?.[sup];
+  if (!text) { alert('אין פריטים להזמנה מספק זה'); return; }
+  navigator.clipboard.writeText(text).then(() => {
+    const names = { klim:'קלים פלוס', raz:'רז רוקחות', super:'סופר-פארם' };
+    alert(`✅ הועתק! ${names[sup] || ''} – ניתן להדביק בוואטסאפ / אתר ספק`);
+  });
+}
+
+function printOrder() {
+  const el = document.getElementById('order-text-all');
+  if (!el) { alert('לחץ "עדכן הזמנה" תחילה'); return; }
+  const w = window.open('', '_blank');
+  w.document.write(`<html dir="rtl"><head><style>body{font-family:Arial;font-size:13px;padding:20px} pre{white-space:pre-wrap;line-height:1.6}</style></head><body><pre>${el.textContent}</pre></body></html>`);
+  w.document.close(); w.print();
+}
+
+// ===================== EXPORT / IMPORT =====================
+function exportData() {
+  const blob = new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `clinic_inventory_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+}
+
+function importData(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (confirm(`ייבוא ${data.length} פריטים? הנתונים הנוכחיים יוחלפו.`)) {
+        items = data; saveData(); renderInventory(currentTab);
+      }
+    } catch { alert('קובץ לא תקין'); }
+  };
+  reader.readAsText(file); e.target.value = '';
+}
+
+
+// ===================== PENDING (פריטים לא מוכרים) =====================
+let pendingItems = JSON.parse(localStorage.getItem('pending_items') || '[]');
+
+function savePending() {
+  localStorage.setItem('pending_items', JSON.stringify(pendingItems));
+  updatePendingBadge();
+  syncPendingToFirebase();
+}
+
+async function syncPendingToFirebase() {
+  if (!window._firebaseReady) return;
+  try {
+    // Save all pending as single doc for simplicity
+    const d = window._fsDoc(window._db, 'meta', 'pending_items');
+    await window._fsSetDoc(d, { items: pendingItems });
+  } catch(e) { console.warn('Pending sync error:', e); }
+}
+
+function updatePendingBadge() {
+  const badge = document.getElementById('pending-badge');
+  if (!badge) return;
+  if (pendingItems.length > 0) {
+    badge.textContent = pendingItems.length;
+    badge.style.display = 'inline';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function openUnknownModal() {
+  document.getElementById('u-name').value = '';
+  document.getElementById('u-qty').value = '1';
+  document.getElementById('u-note').value = '';
+  document.getElementById('u-photo').value = '';
+  document.getElementById('u-preview').style.display = 'none';
+  document.getElementById('unknown-modal').classList.add('open');
+}
+
+function closeUnknownModal() {
+  document.getElementById('unknown-modal').classList.remove('open');
+}
+
+function previewPhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = document.getElementById('u-preview');
+    img.src = e.target.result;
+    img.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function saveUnknown() {
+  const name = document.getElementById('u-name').value.trim();
+  if (!name) { alert('נא לרשום תיאור של הפריט'); return; }
+  const photo = document.getElementById('u-preview').src || '';
+  const item = {
+    id: Date.now(),
+    name,
+    qty: parseInt(document.getElementById('u-qty').value) || 0,
+    note: document.getElementById('u-note').value.trim(),
+    photo: photo.startsWith('data:') ? photo : '',
+    date: new Date().toLocaleDateString('he-IL'),
+  };
+  pendingItems.push(item);
+  savePending();
+  closeUnknownModal();
+  alert('✅ הפריט נשמר! רוני יסווג אותו בקרוב.');
+}
+
+function renderPending() {
+  const c = document.getElementById('pending-list');
+  if (!c) return;
+  if (pendingItems.length === 0) {
+    c.innerHTML = '<div class="empty"><div class="icon">✅</div>אין פריטים ממתינים לאישור</div>';
+    return;
+  }
+  c.innerHTML = pendingItems.map(item => `
+    <div class="pending-card">
+      ${item.photo ? `<img src="${item.photo}" alt="תמונה">` : '<div style="width:80px;height:80px;background:#F0F4F3;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0">📦</div>'}
+      <div class="info">
+        <h4>${item.name}</h4>
+        <div class="meta">כמות שנספרה: <strong>${item.qty}</strong>${item.note ? ' · ' + item.note : ''}</div>
+        <div class="meta">נוסף: ${item.date}</div>
+        <div class="pending-actions">
+          <button class="btn btn-primary btn-sm" onclick="approvePending(${item.id})">✅ הוסף למסד</button>
+          <button class="btn btn-outline btn-sm" onclick="deletePending(${item.id})">🗑️ מחק</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function approvePending(id) {
+  const item = pendingItems.find(i => i.id === id);
+  if (!item) return;
+  // מלא את מודל ההוספה עם הנתונים הידועים
+  document.getElementById('f-name').value = item.name;
+  document.getElementById('f-stock').value = item.qty;
+  document.getElementById('f-note').value = item.note || '';
+  document.getElementById('f-makat').value = '';
+  document.getElementById('f-min').value = 1;
+  document.getElementById('f-orderqty').value = 1;
+  document.getElementById('f-supplier').value = 'other';
+  document.getElementById('f-cat').value = 'שונות';
+  editingId = null;
+  document.getElementById('modal-title').textContent = 'הוספת פריט חדש (מממתינים)';
+  // שמור את ה-id של הממתין למחיקה אחרי שמירה
+  document.getElementById('modal').dataset.pendingId = id;
+  document.getElementById('modal').classList.add('open');
+  showTab('inventory');
+}
+
+function deletePending(id) {
+  if (!confirm('למחוק פריט זה מהרשימה?')) return;
+  pendingItems = pendingItems.filter(i => i.id !== id);
+  savePending();
+  renderPending();
+}
+
+
+// ===================== CLAUDE REPORT =====================
+function generateClaudeReport() {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('he-IL');
+  const lastCount = localStorage.getItem('last_inventory_count');
+  const lastCountStr = lastCount ? new Date(lastCount).toLocaleDateString('he-IL') : 'לא ידוע';
+
+  const outOfStock = items.filter(i => i.stock === 0);
+  const lowStock   = items.filter(i => i.stock > 0 && i.stock <= i.min);
+  const okStock    = items.filter(i => i.stock > i.min);
+
+  const bySupplier = {};
+  items.forEach(it => {
+    if (!bySupplier[it.supplier]) bySupplier[it.supplier] = [];
+    bySupplier[it.supplier].push(it);
+  });
+
+  const supNames = { raz:'רז רוקחות', klim:'קלים פלוס', super:'סופר-פארם / בית מרקחת', dvora:'דבורה חסון', rimipharm:'רימיפארם', dyn:'DYN דיאגנוסטיקה', medirom:'מדי-רום', other:'אחר' };
+
+  let report = `דוח מלאי מרפאה – ד"ר רונן הולנד
+`;
+  report += `תאריך דוח: ${dateStr}
+`;
+  report += `ספירת מלאי אחרונה: ${lastCountStr}
+`;
+  report += `סה"כ פריטים: ${items.length}
+`;
+  report += `${'═'.repeat(45)}
+
+`;
+
+  report += `⛔ אזלו מהמלאי (${outOfStock.length} פריטים):
+`;
+  if (outOfStock.length === 0) {
+    report += `  אין פריטים שאזלו ✅
+`;
+  } else {
+    outOfStock.forEach(i => {
+      report += `  • ${i.name} [${i.makat}] – ספק: ${supNames[i.supplier]||i.supplier}
+`;
+    });
+  }
+
+  report += `
+⚠️ מלאי נמוך (${lowStock.length} פריטים):
+`;
+  if (lowStock.length === 0) {
+    report += `  אין פריטים במלאי נמוך ✅
+`;
+  } else {
+    lowStock.forEach(i => {
+      report += `  • ${i.name} [${i.makat}] – במלאי: ${i.stock}, מינימום: ${i.min}
+`;
+    });
+  }
+
+  report += `
+✅ מלאי תקין (${okStock.length} פריטים):
+`;
+  okStock.forEach(i => {
+    report += `  • ${i.name} – במלאי: ${i.stock}
+`;
+  });
+
+  report += `
+${'═'.repeat(45)}
+`;
+  report += `פירוט לפי ספק:
+
+`;
+  Object.entries(bySupplier).forEach(([sup, sitems]) => {
+    report += `▸ ${supNames[sup]||sup} (${sitems.length} פריטים):
+`;
+    sitems.forEach(i => {
+      const st = i.stock === 0 ? '⛔' : i.stock <= i.min ? '⚠️' : '✅';
+      report += `  ${st} ${i.name} – ${i.stock} יח' במלאי`;
+      if (i.note) report += ` (${i.note})`;
+      report += `
+`;
+    });
+    report += `
+`;
+  });
+
+  if (pendingItems.length > 0) {
+    report += `${'═'.repeat(45)}
+`;
+    report += `📋 פריטים ממתינים לסיווג (${pendingItems.length}):
+`;
+    pendingItems.forEach(i => {
+      report += `  • ${i.name} – כמות: ${i.qty}${i.note ? ', ' + i.note : ''} (${i.date})
+`;
+    });
+  }
+
+  document.getElementById('report-text').value = report;
+  document.getElementById('report-modal').classList.add('open');
+}
+
+function closeReportModal() {
+  document.getElementById('report-modal').classList.remove('open');
+}
+
+function copyReport() {
+  const text = document.getElementById('report-text').value;
+  navigator.clipboard.writeText(text).then(() => {
+    alert('✅ הדוח הועתק! הדבק אותו לClaude לקבלת ניתוח.');
+  });
+}
+
+// ===================== TABS =====================
+function showTab(name) {
+  currentTab = name === 'meds' ? 'meds' : name === 'supplies' ? 'supplies' : name === 'pending' ? currentTab : 'all';
+  ['inventory','meds','supplies','order','pending'].forEach(t => {
+    const el = document.getElementById(`tab-${t}`);
+    if (el) el.style.display = 'none';
+  });
+  document.getElementById(`tab-${name}`).style.display = '';
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    const names = ['inventory','meds','supplies','order','pending'];
+    t.classList.toggle('active', names[i] === name);
+  });
+  if (name === 'order') generateOrder();
+  else if (name === 'pending') renderPending();
+  else renderInventory(currentTab);
+}
+
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal')) closeModal();
+});
+const unknownModal = document.getElementById('unknown-modal');
+if (unknownModal) unknownModal.addEventListener('click', e => {
+  if (e.target === unknownModal) closeUnknownModal();
+});
+const reportModal = document.getElementById('report-modal');
+if (reportModal) reportModal.addEventListener('click', e => {
+  if (e.target === reportModal) closeReportModal();
+});
+
+// Wait for Firebase then init
+if (window._firebaseReady) {
+  initApp();
+} else {
+  window.addEventListener('firebaseReady', initApp);
+  // Fallback if Firebase takes too long
+  setTimeout(() => { if (!window._firebaseReady) initApp(); }, 3000);
+}
+</script>
+</body>
+</html>
