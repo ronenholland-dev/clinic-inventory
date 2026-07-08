@@ -508,8 +508,7 @@ function loadData() {
     ...SUPPLIES.map((it, i) => ({ ...it, id: MEDS.length + i })),
   ];
   if (saved) {
-    items = JSON.parse(saved);
-    // מיזוג – הוסף פריטים חדשים שלא קיימים עדיין
+items = JSON.parse(saved).filter(Boolean);    // מיזוג – הוסף פריטים חדשים שלא קיימים עדיין
     const existingMakats = new Set(items.map(i => i.makat));
     const newItems = allDefault.filter(i => !existingMakats.has(i.makat));
     if (newItems.length > 0) {
