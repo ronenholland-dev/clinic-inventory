@@ -350,27 +350,27 @@ function markCounted() {
 // ===================== DATA =====================
 const MEDS = [
   // רז רוקחות – הרדמה מקומית
-  { makat:'7290015863490', name:'לידוקאין HCl 1% סאלף 10מ"ג/מ"ל 5×אמפ (רשום)', cat:'הרדמה מקומית', supplier:'raz', stock:2, min:1, orderQty:1, note:'קופסא = 5 אמפ' },
+  { makat:'7290015863490', name:'לידוקאין HCl 1% סאלף 10מ"ג/מ"ל 5×אמפ (רשום)', cat:'הרדמה מקומית', supplier:'raz', stock:8, min:1, orderQty:1, note:'קופסא = 5 אמפ' },
   { makat:'7321839711084', name:'קסילוקאין ספריי 10% 50 מ"ל', cat:'הרדמה מקומית', supplier:'raz', stock:1, min:1, orderQty:1, note:'' },
   { makat:'7290018490228', name:'לידוקאין RAZ ספריי 10% 80G', cat:'הרדמה מקומית', supplier:'raz', stock:0, min:1, orderQty:2, note:'REG' },
 
   // רז רוקחות – אנטיביוטיקה
-  { makat:'7290000806402', name:'דוקסילין 100 מ"ג', cat:'אנטיביוטיקה', supplier:'raz', stock:3, min:2, orderQty:100, note:'קופסא = 10 טבליות' },
+  { makat:'7290000806402', name:'דוקסילין 100 מ"ג', cat:'אנטיביוטיקה', supplier:'raz', stock:11, min:2, orderQty:100, note:'קופסא = 10 טבליות' },
   { makat:'7290006676962', name:'פאן צפריקסון 1ג (רוציפין)', cat:'אנטיביוטיקה', supplier:'raz', stock:1, min:1, orderQty:1, note:'קופסא = 10 ויאלים' },
 
   // רז רוקחות – אמפולות / זריקות
   { makat:'7290008013352', name:'עזרקאין 1% אמפולות', cat:'אמפולות / זריקות', supplier:'raz', stock:2, min:2, orderQty:1, note:'קופסא = 5 אמפ' },
   { makat:'031973086',     name:'לידוקאין 1% אמפולות (A5I016)', cat:'אמפולות / זריקות', supplier:'raz', stock:1, min:1, orderQty:1, note:'100 אמפ' },
-  { makat:'7290000809106', name:'דרמקומביין קרם 15 גר׳ – מגיע 120 יח׳ בקופסא', cat:'קרמים ומשחות', supplier:'raz', stock:2, min:1, orderQty:1, note:'' },
+  { makat:'7290000809106', name:'דרמקומביין קרם 15 גר׳ – מגיע 120 יח׳ בקופסא', cat:'קרמים ומשחות', supplier:'raz', stock:1, min:1, orderQty:1, note:'' },
   { makat:'7290110730482', name:'אביטרון 75 מ"ג/3מ"ל להזרקה', cat:'אמפולות / זריקות', supplier:'raz', stock:0, min:1, orderQty:1, note:'קופסא = 5 אמפ' },
   { makat:'7290015863124', name:'אדרנלין סאלף 1מ"ג/מ"ל תמיסה להזרקה', cat:'אמפולות / זריקות', supplier:'raz', stock:1, min:1, orderQty:1, note:'קופסא = 10 אמפ' },
   { makat:'7290008012751', name:'מונורול 3 גרם שטי', cat:'תרופות כלליות', supplier:'raz', stock:2, min:1, orderQty:1, note:'' },
 
   // רז רוקחות – פניצילין / בנזטציל
-  { makat:'1926',          name:'בנזטציל U 1,200,000 ויאל – תכשיר 29 ג׳', cat:'אמפולות / זריקות', supplier:'raz', stock:2, min:2, orderQty:1, note:'קופסא = 1 ויאל' },
+  { makat:'1926',          name:'בנזטציל U 1,200,000 ויאל – תכשיר 29 ג׳', cat:'אמפולות / זריקות', supplier:'raz', stock:34, min:2, orderQty:1, note:'קופסא = 1 ויאל' },
 
   // רז רוקחות – אזניל
-  { makat:'7290010355167', name:'אזניל 250 מ"ג 6 קפליות', cat:'אנטיביוטיקה', supplier:'raz', stock:2, min:1, orderQty:1, note:'' },
+  { makat:'7290010355167', name:'אזניל 250 מ"ג 6 קפליות', cat:'אנטיביוטיקה', supplier:'raz', stock:6, min:1, orderQty:1, note:'' },
 
   // רז רוקחות – טרולאקסין
   { makat:'7290104368202', name:'טרולאקסין קרם 200 מ"ל מדיסקין', cat:'קרמים ומשחות', supplier:'raz', stock:1, min:1, orderQty:1, note:'' },
@@ -385,15 +385,15 @@ const MEDS = [
   { makat:'7290015793087', name:'צפטריאקסון-ויט 1 גרם', cat:'אנטיביוטיקה', supplier:'raz', stock:0, min:1, orderQty:1, note:'קופסא = 10 ויאלים' },
 
   // רז רוקחות – נאטריביק
-  { makat:'2117471',       name:'Natribic 84מ"ג/מ"ל (Bicarbonate Sodium) STEROP', cat:'אמפולות / זריקות', supplier:'raz', stock:0, min:1, orderQty:1, note:'20 ויאל' },
+  { makat:'2117471',       name:'Natribic 84מ"ג/מ"ל (Bicarbonate Sodium) STEROP', cat:'אמפולות / זריקות', supplier:'raz', stock:11, min:1, orderQty:1, note:'20 ויאל' },
 
   // רז רוקחות – תרופות חדשות
   { makat:'72989814',      name:'Elecom Cream 15GR', cat:'קרמים ומשחות', supplier:'raz', stock:1, min:1, orderQty:1, note:'120 יח בקופסא' },
   { makat:'7290106062863', name:'Asival 10MG/2ML (וליום IV)', cat:'אמפולות / זריקות', supplier:'raz', stock:1, min:1, orderQty:1, note:'קופסא = 10 אמפ' },
   { makat:'7290102062348', name:'Fluconazole TEVA 150MG 1 קפסולה', cat:'תרופות כלליות', supplier:'raz', stock:2, min:1, orderQty:1, note:'' },
-  { makat:'7290010287109', name:'Lidopri-Avneir 5% 30G קרם הרדמה', cat:'קרמים ומשחות', supplier:'raz', stock:1, min:1, orderQty:1, note:'EMLA גנרי' },
+  { makat:'7290010287109', name:'Lidopri-Avneir 5% 30G קרם הרדמה', cat:'קרמים ומשחות', supplier:'raz', stock:17, min:1, orderQty:1, note:'EMLA גנרי' },
   { makat:'5761168',       name:'Medaxone (Ceftriaxone) 1g/vial', cat:'אמפולות / זריקות', supplier:'raz', stock:0, min:1, orderQty:1, note:'קופסא = 10 ויאלים' },
-  { makat:'3582910013679', name:'Flagyl 250MG ×20 טבליות', cat:'תרופות כלליות', supplier:'raz', stock:1, min:1, orderQty:1, note:'' },
+  { makat:'3582910013679', name:'Flagyl 250MG ×20 טבליות', cat:'תרופות כלליות', supplier:'raz', stock:14, min:1, orderQty:1, note:'' },
 
   // בית מרקחת ברק – חדש
   { makat:'36485',  name:'Vita-Merfen Oint 100GR', cat:'קרמים ומשחות', supplier:'super', stock:0, min:1, orderQty:1, note:'בית מרקחת ברק' },
@@ -416,23 +416,22 @@ const MEDS = [
 
   // ── קיטי בדיקות מהירות ──
   // דבורה חסון – HIV
-  { makat:'HIV-102', name:'HIV 1/2 STAT-PAK', cat:'קיטי בדיקות מהירות', supplier:'dvora', stock:0, min:5, orderQty:10, note:'קופסא = 20 קסטות' },
+  { makat:'HIV-102', name:'HIV 1/2 STAT-PAK', cat:'קיטי בדיקות מהירות', supplier:'dvora', stock:340, min:5, orderQty:10, note:'קופסא = 20 קסטות (17 קופסאות אצל רונן בבית)' },
 
   // רימיפארם – קיטי STD
-  { makat:'4023', name:'HBsAg Rapid Test Cassette', cat:'קיטי בדיקות מהירות', supplier:'rimipharm', stock:0, min:2, orderQty:3, note:'קופסא = 25 בדיקות' },
-  { makat:'4022', name:'Syphilis Cassette 25 Test', cat:'קיטי בדיקות מהירות', supplier:'rimipharm', stock:0, min:2, orderQty:3, note:'קופסא = 25 בדיקות' },
-  { makat:'4020', name:'HCV Cassette 25 Test', cat:'קיטי בדיקות מהירות', supplier:'rimipharm', stock:0, min:2, orderQty:3, note:'קופסא = 25 בדיקות' },
-,
+  { makat:'4023', name:'HBsAg Rapid Test Cassette', cat:'קיטי בדיקות מהירות', supplier:'rimipharm', stock:50, min:2, orderQty:3, note:'קופסא = 25 בדיקות (2 קופסאות אצל רונן בבית)' },
+  { makat:'4022', name:'Syphilis Cassette 25 Test', cat:'קיטי בדיקות מהירות', supplier:'rimipharm', stock:150, min:2, orderQty:3, note:'קופסא = 25 בדיקות (6 קופסאות אצל רונן בבית)' },
+  { makat:'4020', name:'HCV Cassette 25 Test', cat:'קיטי בדיקות מהירות', supplier:'rimipharm', stock:50, min:2, orderQty:3, note:'קופסא = 25 בדיקות (2 קופסאות אצל רונן בבית)' },
 
   // DYN דיאגנוסטיקה – סטיקים לשתן
-  { makat:'ERBA-URPH0028', name:'Dekaphan Laura – סטיקים לשתן', cat:'קיטי בדיקות מהירות', supplier:'dyn', stock:0, min:1, orderQty:5, note:'קופסא = 170 יח' },
+  { makat:'ERBA-URPH0028', name:'Dekaphan Laura – סטיקים לשתן', cat:'קיטי בדיקות מהירות', supplier:'dyn', stock:5, min:1, orderQty:5, note:'קופסא = 170 יח' },
 
   // מדי-רום – שואב עשן
   { makat:'SF35', name:'Smoke Shark 2 Filter – שואב עשן', cat:'ציוד פיזיקלי', supplier:'medirom', stock:0, min:1, orderQty:2, note:'יחידה בודדת' }
 ];
 
 const SUPPLIES = [
-  { makat:'830',  name:'פד גזה 10*10 1/100', cat:'פדים וגזה', supplier:'klim', stock:3, min:2, orderQty:15, note:'' },
+  { makat:'830',  name:'פד גזה 10*10 1/100', cat:'פדים וגזה', supplier:'klim', stock:1, min:2, orderQty:15, note:'' },
   { makat:'514',  name:'פד גזה 7.5*7.5 ס"מ 1/100', cat:'פדים וגזה', supplier:'klim', stock:2, min:1, orderQty:10, note:'' },
   { makat:'229',  name:'מגבות פדיקור 60*40 1/100', cat:'פדים וגזה', supplier:'klim', stock:1, min:1, orderQty:1, note:'' },
   { makat:'230',  name:'מגבות מניקור 40*30 1/100', cat:'פדים וגזה', supplier:'klim', stock:1, min:1, orderQty:1, note:'' },
@@ -446,28 +445,50 @@ const SUPPLIES = [
   { makat:'2954', name:'מזרק טוברקולין 1 מל +מחט 0.5*27 פריקה 100 יח', cat:'מחטים ומזרקים', supplier:'klim', stock:0, min:1, orderQty:1, note:'לבדיקת מנטו' },
   { makat:'430',  name:'מחט כתומה 25G X5/8 כמות 100', cat:'מחטים ומזרקים', supplier:'klim', stock:2, min:1, orderQty:1, note:'' },
   { makat:'861',  name:'מחט G30 צהובה היפודרמית 100 יח PIC', cat:'מחטים ומזרקים', supplier:'klim', stock:2, min:1, orderQty:2, note:'' },
-  { makat:'848',  name:'מחט 1.5*18 ורודה 1/100', cat:'מחטים ומזרקים', supplier:'klim', stock:1, min:1, orderQty:1, note:'' },
-  { makat:'211',  name:'מחט אפורה BD 27G - 1/100', cat:'מחטים ומזרקים', supplier:'klim', stock:1, min:1, orderQty:2, note:'' },
+  { makat:'848',  name:'מחט 1.5*18 ורודה 1/100', cat:'מחטים ומזרקים', supplier:'klim', stock:2, min:1, orderQty:1, note:'' },
+  { makat:'211',  name:'מחט אפורה BD 27G - 1/100', cat:'מחטים ומזרקים', supplier:'klim', stock:2, min:1, orderQty:2, note:'' },
   { makat:'845',  name:'מחט ירוקה 1.5 21GX כמות 100 יח', cat:'מחטים ומזרקים', supplier:'klim', stock:1, min:1, orderQty:1, note:'' },
-  { makat:'7322', name:'מחט סטרילית 22G*1.5 שחור PIC 1/100', cat:'מחטים ומזרקים', supplier:'klim', stock:0, min:1, orderQty:1, note:'' },
+  { makat:'7322', name:'מחט סטרילית 22G*1.5 שחור PIC 1/100', cat:'מחטים ומזרקים', supplier:'klim', stock:1, min:1, orderQty:1, note:'' },
   { makat:'BD304000', name:'מחט BD 30GX1/2 YELLOW קופסא 100', cat:'מחטים ומזרקים', supplier:'klim', stock:0, min:1, orderQty:2, note:'' },
-  { makat:'BD300600', name:'מחט 25GX5/8 ORANGE קופסא 100', cat:'מחטים ומזרקים', supplier:'klim', stock:0, min:1, orderQty:2, note:'' },
-  { makat:'DBT320933', name:'מזרק 0.5 מ"ל BD 0.5X30GX8MM', cat:'מחטים ומזרקים', supplier:'klim', stock:0, min:1, orderQty:2, note:'' },
-  { makat:'2332', name:'מחט היפודרמית סטרילית 32G בוטקס', cat:'מחטים ומזרקים', supplier:'klim', stock:1, min:1, orderQty:1, note:'' },
+  { makat:'BD300600', name:'מחט 25GX5/8 ORANGE קופסא 100', cat:'מחטים ומזרקים', supplier:'klim', stock:1, min:1, orderQty:2, note:'' },
+  { makat:'DBT320933', name:'מזרק 0.5 מ"ל BD 0.5X30GX8MM', cat:'מחטים ומזרקים', supplier:'klim', stock:10, min:1, orderQty:2, note:'' },
+  { makat:'2332', name:'מחט היפודרמית סטרילית 32G בוטקס', cat:'מחטים ומזרקים', supplier:'klim', stock:0, min:1, orderQty:1, note:'' },
   { makat:'3557', name:'דוקרן בטיחותי 100 יח 21G ירוק מבוגר', cat:'מחטים ומזרקים', supplier:'klim', stock:0, min:1, orderQty:1, note:'' },
   { makat:'834',  name:'מחט צהובה 30X1/2', cat:'מחטים ומזרקים', supplier:'klim', stock:1, min:1, orderQty:1, note:'' },
   { makat:'1060', name:'מחט 30*1/2 BD', cat:'מחטים ומזרקים', supplier:'klim', stock:0, min:1, orderQty:1, note:'' },
-  { makat:'1224', name:'כוס שתן מכסה הברגה 125 מל אדום (5 סטרילי)', cat:'כוסות ומכלים', supplier:'klim', stock:5, min:2, orderQty:1, note:'1/300 יח' },
+  { makat:'1224', name:'כוס שתן מכסה הברגה 125 מל אדום (5 סטרילי)', cat:'כוסות ומכלים', supplier:'klim', stock:51, min:2, orderQty:1, note:'1/300 יח' },
   { makat:'512',  name:'אלכוהול 70% 1 ליטר', cat:'אלכוהול וחיטוי', supplier:'klim', stock:2, min:1, orderQty:1, note:'' },
   { makat:'1231', name:'מטליות אלכוהול חיטוי מזון 1/180', cat:'אלכוהול וחיטוי', supplier:'klim', stock:3, min:2, orderQty:1, note:'' },
   { makat:'997',  name:'שיק מגלח רפואי 100 יח', cat:'אלכוהול וחיטוי', supplier:'klim', stock:1, min:1, orderQty:1, note:'' },
   { makat:'1382', name:'תרסיס חיטוי משטחים אלכוהול שוורץ 750 מ"ל', cat:'אלכוהול וחיטוי', supplier:'klim', stock:1, min:1, orderQty:1, note:'' },
   { makat:'1250', name:'גל אולטרסאונד 260 מ"ל', cat:'אלכוהול וחיטוי', supplier:'klim', stock:2, min:1, orderQty:2, note:'' },
   { makat:'FY1907', name:'גל אולטרסאונד סטרילי 20 מ"ל', cat:'אלכוהול וחיטוי', supplier:'klim', stock:1, min:1, orderQty:10, note:'' },
-  { makat:'849',  name:'פלסטר נגד מים קלאסי 80 יח', cat:'פלסטר ותחבושות', supplier:'klim', stock:2, min:1, orderQty:1, note:'' },
+  { makat:'849',  name:'פלסטר נגד מים קלאסי 80 יח', cat:'פלסטר ותחבושות', supplier:'klim', stock:3, min:1, orderQty:1, note:'' },
   { makat:'8721', name:'סט תפירה לתפירה סטרילי מדיפרו', cat:'פלסטר ותחבושות', supplier:'klim', stock:1, min:1, orderQty:2, note:'' },
   { makat:'92812', name:'פלסטר פרו פיקס + משבצות לחיתוך 10מ*7.5ס"מ', cat:'פלסטר ותחבושות', supplier:'klim', stock:0, min:1, orderQty:1, note:'' },
   { makat:'0904-3-10', name:'סקלפל כירורגי עם ידית פלסטיק 10/11/12/15', cat:'ציוד פיזיקלי', supplier:'klim', stock:1, min:1, orderQty:1, note:'מידה 12' },
+  { makat:'TRANSFOR1IN', name:'transfor דבק פלסטר 1 inch (לפי גלילים)', cat:'פלסטר ותחבושות', supplier:'klim', stock:7, min:1, orderQty:2, note:'נמצא בספירה 12.7.26' },
+  { makat:'11', name:'medi plus 10ml מזרק', cat:'מחטים ומזרקים', supplier:'klim', stock:1, min:1, orderQty:3, note:'נמצא בספירה 12.7.26' },
+  { makat:'HANDPIECESHEATH', name:'handpiece sheath', cat:'ציוד פיזיקלי', supplier:'klim', stock:12, min:1, orderQty:1, note:'נמצא בספירה 12.7.26' },
+  { makat:'GAUZE5X5', name:'פד גזה 5*5', cat:'פדים וגזה', supplier:'klim', stock:3, min:2, orderQty:15, note:'נמצא בספירה 12.7.26' },
+  { makat:'CYBOW10', name:'CYBOW 10 מקלוני לבדיקת שתן', cat:'קיטי בדיקות מהירות', supplier:'other', stock:5, min:2, orderQty:3, note:'נמצא בספירה 12.7.26' },
+  { makat:'DRESSSET', name:'Dressing Set', cat:'פלסטר ותחבושות', supplier:'other', stock:15, min:2, orderQty:5, note:'נמצא בספירה 12.7.26' },
+  { makat:'EUROBAND', name:'ערכת תפירה EUROBAND', cat:'ציוד פיזיקלי', supplier:'other', stock:2, min:1, orderQty:2, note:'נמצא בספירה 12.7.26' },
+  { makat:'MICROPORE1', name:'micropore 1 inch (לפי גלילים)', cat:'פלסטר ותחבושות', supplier:'other', stock:23, min:2, orderQty:5, note:'נמצא בספירה 12.7.26' },
+  { makat:'SUCTIONTUBE', name:'צינור סיליקון לשואב עשן', cat:'ציוד פיזיקלי', supplier:'other', stock:4, min:1, orderQty:2, note:'נמצא בספירה 12.7.26' },
+  { makat:'MEDIPLUSALC', name:'mediplus alcohol', cat:'אלכוהול וחיטוי', supplier:'other', stock:14, min:2, orderQty:5, note:'נמצא בספירה 12.7.26' },
+  { makat:'8', name:'ג\'ל US שקית מילוי', cat:'אלכוהול וחיטוי', supplier:'other', stock:1, min:1, orderQty:2, note:'נמצא בספירה 12.7.26' },
+  { makat:'WIPESCLEAN', name:'מגבונים ניקוי וחיטוי', cat:'אלכוהול וחיטוי', supplier:'other', stock:2, min:1, orderQty:2, note:'נמצא בספירה 12.7.26' },
+  { makat:'9', name:'מבחנות 6.0 ml', cat:'כוסות ומכלים', supplier:'other', stock:1, min:1, orderQty:2, note:'נמצא בספירה 12.7.26' },
+  { makat:'TUBE5ML', name:'מבחנות 5.0 ml', cat:'כוסות ומכלים', supplier:'other', stock:5, min:2, orderQty:5, note:'נמצא בספירה 12.7.26' },
+  { makat:'MEDICPRO3ML', name:'medic pro 3ml מזרק ללא מחט', cat:'מחטים ומזרקים', supplier:'other', stock:2, min:1, orderQty:3, note:'נמצא בספירה 12.7.26' },
+  { makat:'12', name:'מיישר פין', cat:'שונות', supplier:'other', stock:1, min:1, orderQty:1, note:'נמצא בספירה 12.7.26' },
+  { makat:'13', name:'סכיני גילוח SCHIK', cat:'שונות', supplier:'other', stock:1, min:1, orderQty:2, note:'נמצא בספירה 12.7.26' },
+  { makat:'ALOCOM15G', name:'אלוקום קרם 15 גרם', cat:'קרמים ומשחות', supplier:'other', stock:5, min:2, orderQty:3, note:'נמצא בספירה 12.7.26' },
+  { makat:'SHFADALIM', name:'שפדלים', cat:'שונות', supplier:'other', stock:2, min:2, orderQty:5, note:'נמצא בספירה 12.7.26' },
+  { makat:'16', name:'מזרק ללא מחט 1ml', cat:'מחטים ומזרקים', supplier:'other', stock:1, min:1, orderQty:3, note:'נמצא בספירה 12.7.26' },
+  { makat:'17', name:'מזרק עם מחט 1ml mediplud', cat:'מחטים ומזרקים', supplier:'other', stock:1, min:1, orderQty:3, note:'נמצא בספירה 12.7.26' },
+  { makat:'18', name:'מקלון צמר גפן אפליקטור סטרילי', cat:'שונות', supplier:'other', stock:0, min:1, orderQty:2, note:'נמצא בספירה 12.7.26' },
 ];
 
 let items = [];
